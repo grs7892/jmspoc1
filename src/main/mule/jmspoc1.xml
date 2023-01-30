@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="ea6fb3c6-a72e-4a74-bc68-2e718607932a" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="ebb2aeb8-52e1-40b9-a33b-89edd90a4def" >
+		<jms:active-mq-connection username="admin" password="admin" specification="JMS_2_0">
+			<jms:factory-configuration brokerUrl="tcp://localhost:61616" />
+			<jms:connection-factory >
+				<jms:jndi-connection-factory />
+			</jms:connection-factory>
+		</jms:active-mq-connection>
+	</jms:config>
+	<jms:config name="JMS_Config1" doc:name="JMS Config" doc:id="5caacf63-e08b-4df8-82d6-3ab61d83669d" >
+		<jms:active-mq-connection username="admin" password="admin" >
+			<jms:factory-configuration brokerUrl="tcp://localhost:61616" />
+		</jms:active-mq-connection>
+	</jms:config>
+	<flow name="jmspoc1Flow" doc:id="aaebbd05-1791-488d-a0a7-37b6716664a4" >
+		<http:listener doc:name="Listener" doc:id="f99bd6d5-c7cf-419e-ab82-b208e1dd20d4" config-ref="HTTP_Listener_config" path="/workpath"/>
+		<logger level="INFO" doc:name="Logger" doc:id="8d9eabe7-cfec-4839-bb7a-33c3f25c0735" message="start flow"/>
+		<jms:publish doc:name="Publish" doc:id="48f1ffdc-4510-4eed-a429-20887a84e305" config-ref="JMS_Config1" destination="testque"/>
+		<logger level="INFO" doc:name="Logger" doc:id="cc217310-95c8-4fcf-90d3-82162e29c5a2" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="814855f0-7405-447f-bb66-8696735d03cd" >
+				<ee:transform doc:name="Transform Message" doc:id="084d4f99-a5ef-4f48-a626-88287bb07b71" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"errType" : error.Type
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>
